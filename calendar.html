@@ -110,20 +110,21 @@ button:hover {
 
 <!-- FIREBASE -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } 
-from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-// 🔑 REPLACE WITH YOUR FIREBASE CONFIG
+// Your Firebase config
 const firebaseConfig = {
-  apiKey: "PASTE_YOURS_HERE",
-  authDomain: "PASTE_YOURS_HERE",
-  projectId: "Langga",
-  storageBucket: "PASTE_YOURS_HERE",
-  messagingSenderId: "PASTE_YOURS_HERE",
-  appId: "PASTE_YOURS_HERE"
+  apiKey: "AIzaSyDypP7Cl0J4YZlf-ny3LLIc13KLOIfTYLc",
+  authDomain: "langga-70261.firebaseapp.com",
+  projectId: "langga-70261",
+  storageBucket: "langga-70261.firebasestorage.app",
+  messagingSenderId: "857665207073",
+  appId: "1:857665207073:web:d096bd656582c78abadc60"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
@@ -174,7 +175,6 @@ function toggleDark() {
     );
 }
 
-// 🔥 FETCH EVENTS FROM FIRESTORE
 async function getEvents() {
     const querySnapshot = await getDocs(collection(db, "loveEvents"));
     let events = [];
@@ -184,11 +184,10 @@ async function getEvents() {
     return events;
 }
 
-// 🔥 ADD EVENT — UPDATED AND FIXED
 async function addEvent() {
-    const name = eventName.value.trim();
+    const name = eventName.value;
     const date = eventDate.value;
-    const note = eventNote.value.trim();
+    const note = eventNote.value;
     const photoInput = eventPhoto;
 
     if (!name || !date) {
@@ -196,17 +195,10 @@ async function addEvent() {
         return;
     }
 
-    try {
-        let photoData = null;
+    const reader = new FileReader();
 
-        if (photoInput.files[0]) {
-            const reader = new FileReader();
-            photoData = await new Promise((resolve, reject) => {
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = (error) => reject(error);
-                reader.readAsDataURL(photoInput.files[0]);
-            });
-        }
+    reader.onload = async function() {
+        const photoData = photoInput.files[0] ? reader.result : null;
 
         await addDoc(collection(db, "loveEvents"), {
             name,
@@ -221,14 +213,15 @@ async function addEvent() {
         eventPhoto.value = "";
 
         alert("Saved 💖");
-        displayEvents();
-    } catch (error) {
-        console.error("Error saving memory:", error);
-        alert("Failed to save. Check console for details.");
+    };
+
+    if (photoInput.files[0]) {
+        reader.readAsDataURL(photoInput.files[0]);
+    } else {
+        reader.onload();
     }
 }
 
-// CALCULATE TIME STATS
 function calculateStats(date) {
     const now = new Date();
     const eventDate = new Date(date);
@@ -277,13 +270,11 @@ function calculateStats(date) {
     };
 }
 
-// DELETE EVENT
 async function deleteEvent(id) {
     await deleteDoc(doc(db, "loveEvents", id));
     displayEvents();
 }
 
-// EDIT EVENT
 async function editEvent(id, current) {
     const newName = prompt("Edit Name:", current.name);
     const newDate = prompt("Edit Date (YYYY-MM-DD):", current.date);
@@ -299,7 +290,6 @@ async function editEvent(id, current) {
     }
 }
 
-// DISPLAY EVENTS
 async function displayEvents() {
     const events = await getEvents();
     const container = document.getElementById("eventsList");
@@ -329,7 +319,6 @@ async function displayEvents() {
     });
 }
 
-// MODAL CONTROLS
 function openModal() {
     document.getElementById("modal").style.display = "flex";
     displayEvents();
