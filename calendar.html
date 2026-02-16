@@ -114,13 +114,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } 
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+// 🔹 REPLACE THE PLACEHOLDERS BELOW WITH YOUR FIREBASE CONFIG FROM FIREBASE CONSOLE
 const firebaseConfig = {
-  apiKey: "PASTE_YOURS_HERE",
-  authDomain: "PASTE_YOURS_HERE",
-  projectId: "PASTE_YOURS_HERE",
-  storageBucket: "PASTE_YOURS_HERE",
-  messagingSenderId: "PASTE_YOURS_HERE",
-  appId: "PASTE_YOURS_HERE"
+  apiKey: "YOUR_API_KEY_HERE",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
