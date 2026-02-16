@@ -114,14 +114,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } 
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// 🔹 REPLACE THE PLACEHOLDERS BELOW WITH YOUR FIREBASE CONFIG FROM FIREBASE CONSOLE
+// 🔑 REPLACE WITH YOUR FIREBASE CONFIG
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY_HERE",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "PASTE_YOURS_HERE",
+  authDomain: "PASTE_YOURS_HERE",
+  projectId: "Langga",
+  storageBucket: "PASTE_YOURS_HERE",
+  messagingSenderId: "PASTE_YOURS_HERE",
+  appId: "PASTE_YOURS_HERE"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -174,6 +174,7 @@ function toggleDark() {
     );
 }
 
+// 🔥 FETCH EVENTS FROM FIRESTORE
 async function getEvents() {
     const querySnapshot = await getDocs(collection(db, "loveEvents"));
     let events = [];
@@ -183,10 +184,11 @@ async function getEvents() {
     return events;
 }
 
+// 🔥 ADD EVENT — UPDATED AND FIXED
 async function addEvent() {
-    const name = eventName.value;
+    const name = eventName.value.trim();
     const date = eventDate.value;
-    const note = eventNote.value;
+    const note = eventNote.value.trim();
     const photoInput = eventPhoto;
 
     if (!name || !date) {
@@ -194,10 +196,17 @@ async function addEvent() {
         return;
     }
 
-    const reader = new FileReader();
+    try {
+        let photoData = null;
 
-    reader.onload = async function() {
-        const photoData = photoInput.files[0] ? reader.result : null;
+        if (photoInput.files[0]) {
+            const reader = new FileReader();
+            photoData = await new Promise((resolve, reject) => {
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = (error) => reject(error);
+                reader.readAsDataURL(photoInput.files[0]);
+            });
+        }
 
         await addDoc(collection(db, "loveEvents"), {
             name,
@@ -212,15 +221,14 @@ async function addEvent() {
         eventPhoto.value = "";
 
         alert("Saved 💖");
-    };
-
-    if (photoInput.files[0]) {
-        reader.readAsDataURL(photoInput.files[0]);
-    } else {
-        reader.onload();
+        displayEvents();
+    } catch (error) {
+        console.error("Error saving memory:", error);
+        alert("Failed to save. Check console for details.");
     }
 }
 
+// CALCULATE TIME STATS
 function calculateStats(date) {
     const now = new Date();
     const eventDate = new Date(date);
@@ -269,11 +277,13 @@ function calculateStats(date) {
     };
 }
 
+// DELETE EVENT
 async function deleteEvent(id) {
     await deleteDoc(doc(db, "loveEvents", id));
     displayEvents();
 }
 
+// EDIT EVENT
 async function editEvent(id, current) {
     const newName = prompt("Edit Name:", current.name);
     const newDate = prompt("Edit Date (YYYY-MM-DD):", current.date);
@@ -289,6 +299,7 @@ async function editEvent(id, current) {
     }
 }
 
+// DISPLAY EVENTS
 async function displayEvents() {
     const events = await getEvents();
     const container = document.getElementById("eventsList");
@@ -318,6 +329,7 @@ async function displayEvents() {
     });
 }
 
+// MODAL CONTROLS
 function openModal() {
     document.getElementById("modal").style.display = "flex";
     displayEvents();
