@@ -107,26 +107,54 @@ button:hover {
     margin-right: 5px;
 }
 </style>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } 
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "PASTE_YOURS_HERE",
+  authDomain: "PASTE_YOURS_HERE",
+  projectId: "PASTE_YOURS_HERE",
+  storageBucket: "PASTE_YOURS_HERE",
+  messagingSenderId: "PASTE_YOURS_HERE",
+  appId: "PASTE_YOURS_HERE"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.db = db;
+window.collection = collection;
+window.addDoc = addDoc;
+window.getDocs = getDocs;
+window.deleteDoc = deleteDoc;
+window.doc = doc;
+window.updateDoc = updateDoc;
+</script>
+
 </head>
 
 <body>
 
 <div class="container">
-    <h2> Forever  System</h2>
+    <h2> Forever System</h2>
 
     <input type="text" id="eventName" placeholder="Event Name">
     <input type="date" id="eventDate">
     <textarea id="eventNote" placeholder="Notes nimo"></textarea>
-    <input type="file" id="eventPhoto" accept="image/*" placeholder="k">
+    <input type="file" id="eventPhoto" accept="image/*">
 
-    <button onclick="addEvent()">Save </button>
-    <button onclick="openModal()">View Memories </button>
-    <button onclick="toggleDark()"> Dark Mode</button>
+    <button onclick="addEvent()">Save</button>
+    <button onclick="openModal()">View Memories</button>
+    <button onclick="toggleDark()">Dark Mode</button>
 </div>
 
 <div class="modal" id="modal">
     <div class="modal-content">
-        <h3>Memory Dashbord</h3>
+        <h3>Memory Dashboard</h3>
         <div id="analytics"></div>
         <div id="eventsList"></div>
         <button onclick="closeModal()">Exit ❌</button>
@@ -145,15 +173,16 @@ function toggleDark() {
     );
 }
 
-function getEvents() {
-    return JSON.parse(localStorage.getItem("loveEvents")) || [];
+async function getEvents() {
+    const querySnapshot = await getDocs(collection(db, "loveEvents"));
+    let events = [];
+    querySnapshot.forEach((docSnap) => {
+        events.push({ id: docSnap.id, ...docSnap.data() });
+    });
+    return events;
 }
 
-function saveEvents(events) {
-    localStorage.setItem("loveEvents", JSON.stringify(events));
-}
-
-function addEvent() {
+async function addEvent() {
     const name = eventName.value;
     const date = eventDate.value;
     const note = eventNote.value;
@@ -166,11 +195,15 @@ function addEvent() {
 
     const reader = new FileReader();
 
-    reader.onload = function() {
+    reader.onload = async function() {
         const photoData = photoInput.files[0] ? reader.result : null;
-        const events = getEvents();
-        events.push({ name, date, note, photo: photoData });
-        saveEvents(events);
+
+        await addDoc(collection(db, "loveEvents"), {
+            name,
+            date,
+            note,
+            photo: photoData
+        });
 
         eventName.value = "";
         eventDate.value = "";
@@ -235,37 +268,35 @@ function calculateStats(date) {
     };
 }
 
-function deleteEvent(index) {
-    const events = getEvents();
-    events.splice(index, 1);
-    saveEvents(events);
+async function deleteEvent(id) {
+    await deleteDoc(doc(db, "loveEvents", id));
     displayEvents();
 }
 
-function editEvent(index) {
-    const events = getEvents();
-    const newName = prompt("Edit Name:", events[index].name);
-    const newDate = prompt("Edit Date (YYYY-MM-DD):", events[index].date);
-    const newNote = prompt("Edit Note:", events[index].note);
+async function editEvent(id, current) {
+    const newName = prompt("Edit Name:", current.name);
+    const newDate = prompt("Edit Date (YYYY-MM-DD):", current.date);
+    const newNote = prompt("Edit Note:", current.note);
 
     if (newName && newDate) {
-        events[index].name = newName;
-        events[index].date = newDate;
-        events[index].note = newNote;
-        saveEvents(events);
+        await updateDoc(doc(db, "loveEvents", id), {
+            name: newName,
+            date: newDate,
+            note: newNote
+        });
         displayEvents();
     }
 }
 
-function displayEvents() {
-    const events = getEvents();
+async function displayEvents() {
+    const events = await getEvents();
     const container = document.getElementById("eventsList");
     const analytics = document.getElementById("analytics");
 
     container.innerHTML = "";
     analytics.innerHTML = `<strong>Total Memories:</strong> ${events.length}<br>`;
 
-    events.forEach((event, index) => {
+    events.forEach((event) => {
         const stats = calculateStats(event.date);
 
         container.innerHTML += `
@@ -279,8 +310,8 @@ function displayEvents() {
                 💖 Next Monthsary in ${stats.daysUntilMonth} days<br>
                 ${event.note ? `<p>💌 ${event.note}</p>` : ""}
                 ${event.photo ? `<img src="${event.photo}">` : ""}
-                <button class="small-btn" onclick="editEvent(${index})">Edit ✏️</button>
-                <button class="small-btn" onclick="deleteEvent(${index})">Delete ❌</button>
+                <button class="small-btn" onclick='editEvent("${event.id}", ${JSON.stringify(event)})'>Edit ✏️</button>
+                <button class="small-btn" onclick='deleteEvent("${event.id}")'>Delete ❌</button>
             </div>
         `;
     });
